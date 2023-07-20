@@ -1,6 +1,7 @@
 #ifndef URE_RECURSIVE_H
 #define URE_RECURSIVE_H
 
+#include <memory>
 #include "parser.h"
 #include "ure_interface.h"
 
@@ -15,7 +16,7 @@ class UreRecursive : public Ure {
   bool PartialMatch(const std::string& text) override;
 
  private:
-  Regex* re;
+  std::unique_ptr<Regex> re;
 };
 
 }  // namespace ure

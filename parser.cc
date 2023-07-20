@@ -20,9 +20,9 @@ bool Parser::consume(char c) {
   return false;
 }
 
-Regex* Parser::parse_literal() {
+unique_ptr<Regex> Parser::parse_literal() {
   if (idx < pattern.size() && reserved.count(pattern[idx]) == 0) {
-    Regex* r = new Regex(NType::Literal, pattern[idx]);
+    unique_ptr<Regex> r = make_unique<Regex>(NType::Literal, pattern[idx]);
     if (debug) {
       cout << "Consumed " << pattern[idx] << endl;
     }
@@ -33,63 +33,63 @@ Regex* Parser::parse_literal() {
   return nullptr;
 }
 
-Regex* Parser::parse_wildcard() {
+unique_ptr<Regex> Parser::parse_wildcard() {
   if (!consume('.')) return nullptr;
-  return new Regex(NType::Wildcard);
+  return make_unique<Regex>(NType::Wildcard);
 }
 
-Regex* Parser::parse_char() {
-  Regex* r = parse_wildcard();
+unique_ptr<Regex> Parser::parse_char() {
+  unique_ptr<Regex> r = parse_wildcard();
   if (r != nullptr) return r;
   return parse_literal();
 }
 
-Regex* Parser::parse_paren() {
+unique_ptr<Regex> Parser::parse_paren() {
   if (!consume('(')) return nullptr;
-  Regex* r = parse_alternate();
+  unique_ptr<Regex> r = parse_alternate();
   if (!consume(')')) return nullptr;
   return r;
 }
 
-Regex* Parser::parse_item() {
-  Regex* r = parse_paren();
+unique_ptr<Regex> Parser::parse_item() {
+  unique_ptr<Regex> r = parse_paren();
   if (r == nullptr) {
     r = parse_char();
   }
   if (r == nullptr) return nullptr;
 
   if (consume('?')) {
-    return new Regex(NType::Question, r);
+    return make_unique<Regex>(NType::Question, move(r));
   } else if (consume('+')) {
-    return new Regex(NType::Plus, r);
+    return make_unique<Regex>(NType::Plus, move(r));
   } else if (consume('*')) {
-    return new Regex(NType::Star, r);
+    return make_unique<Regex>(NType::Star, move(r));
   } else {
     return r;
   }
 }
 
-Regex* Parser::parse_concat() {
-  Regex* r1 = parse_item();
+unique_ptr<Regex> Parser::parse_concat() {
+  unique_ptr<Regex> r1 = parse_item();
   if (r1 == nullptr) return nullptr;
 
-  Regex* r2 = parse_concat();
-  return new Regex(NType::Concat, r1, r2);  // r2 possibly null
+  unique_ptr<Regex> r2 = parse_concat();
+  return make_unique<Regex>(NType::Concat, move(r1), move(r2));  // r2 possibly null
 }
 
-Regex* Parser::parse_alternate() {
-  Regex* r1 = parse_concat();
+unique_ptr<Regex> Parser::parse_alternate() {
+  unique_ptr<Regex> r1 = parse_concat();
   if (r1 == nullptr) return nullptr;
   if (!consume('|')) {
-    return new Regex(NType::Alternate, r1);
+    return make_unique<Regex>(NType::Alternate, move(r1));
   }
 
-  Regex* r2 = parse_alternate();
+  unique_ptr<Regex> r2 = parse_alternate();
   if (r2 == nullptr) return nullptr;
-  return new Regex(NType::Alternate, r1, r2);
+  return make_unique<Regex>(NType::Alternate, move(r1), move(r2));
 }
 
-Regex* Parser::parse(const string& pattern_) {
+unique_ptr<Regex> Parser::parse(const string& pattern_) {
   pattern = pattern_;
   idx = 0;
   return parse_alternate();

@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 namespace ure {
@@ -40,19 +41,22 @@ enum class NType {
 struct Regex {
   NType type;
   char c;  // Only used for Literal
-  Regex* r1;
-  Regex* r2;  // Only used for Alternate/Concat
+  std::unique_ptr<Regex> r1;
+  std::unique_ptr<Regex> r2;  // Only used for Alternate/Concat
 
   Regex(NType type) : type(type) {}
-  Regex(NType type, char c) : type(type), c(c) {}
-  Regex(NType type, Regex* r1) : type(type), r1(r1) {}
-  Regex(NType type, Regex* r1, Regex* r2) : type(type), r1(r1), r2(r2) {}
+  Regex(NType type, char c)
+    : type(type), c(c) {}
+  Regex(NType type, std::unique_ptr<Regex> r1)
+    : type(type), r1(move(r1)) {}
+  Regex(NType type, std::unique_ptr<Regex> r1, std::unique_ptr<Regex> r2)
+    : type(type), r1(move(r1)), r2(move(r2)) {}
 };
 
 class Parser {
  public:
   Parser(bool debug = false) : debug(debug) {}
-  Regex* parse(const std::string& pattern);
+  std::unique_ptr<Regex> parse(const std::string& pattern);
 
  private:
   std::string pattern;
@@ -60,13 +64,13 @@ class Parser {
   bool debug;
 
   bool consume(char c);
-  Regex* parse_alternate();
-  Regex* parse_concat();
-  Regex* parse_item();
-  Regex* parse_paren();
-  Regex* parse_char();
-  Regex* parse_wildcard();
-  Regex* parse_literal();
+  std::unique_ptr<Regex> parse_alternate();
+  std::unique_ptr<Regex> parse_concat();
+  std::unique_ptr<Regex> parse_item();
+  std::unique_ptr<Regex> parse_paren();
+  std::unique_ptr<Regex> parse_char();
+  std::unique_ptr<Regex> parse_wildcard();
+  std::unique_ptr<Regex> parse_literal();
 };
 
 }  // namespace ure
