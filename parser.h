@@ -5,14 +5,10 @@
 #include <memory>
 #include <string>
 
+#include "regex.h"
+
 namespace ure {
-// EBNF Grammar used for the recursive-descent parser.
-//
-// Grammar currently supports:
-//   Classical regex operators: |, *, concatenation
-//   Parentheses ()
-//   ? and +
-//   . as a wildcard
+// EBNF Grammar used for the recursive-descent parser:
 //
 // Capitalized items are part of the final parsed form, while lowercase items
 // are only used as part of the parsing process.
@@ -27,36 +23,12 @@ namespace ure {
 // char      = Wildcard | Literal
 // Wildcard  = "."
 // Literal   = "a" | "b" | ...
-
-enum class NType {
-  Alternate,
-  Concat,
-  Question,
-  Plus,
-  Star,
-  Wildcard,
-  Literal,
-};
-
-struct Regex {
-  NType type;
-  char c = 0;  // Only used for Literal
-  std::unique_ptr<Regex> r1 {};
-  std::unique_ptr<Regex> r2 {};  // Only used for Alternate/Concat
-
-  Regex(NType type) : type(type) {}
-  Regex(NType type, char c)
-    : type(type), c(c) {}
-  Regex(NType type, std::unique_ptr<Regex> r1)
-    : type(type), r1(move(r1)) {}
-  Regex(NType type, std::unique_ptr<Regex> r1, std::unique_ptr<Regex> r2)
-    : type(type), r1(move(r1)), r2(move(r2)) {}
-
-  bool operator==(const Regex& other) const;
-  bool operator!=(const Regex& other) const;
-};
-
-std::ostream& operator<<(std::ostream&, const Regex&);
+//
+// Grammar currently supports:
+//   Classical regex operators: |, *, concatenation
+//   Parentheses ()
+//   ? and +
+//   . as a wildcard
 
 class Parser {
  public:
