@@ -45,9 +45,13 @@ unique_ptr<Regex> Parser::parse_char() {
 }
 
 unique_ptr<Regex> Parser::parse_paren() {
+  size_t start_idx = idx;
   if (!consume('(')) return nullptr;
   unique_ptr<Regex> r = parse_alternate();
-  if (!consume(')')) return nullptr;
+  if (!consume(')')) {
+    idx = start_idx;
+    return nullptr;
+  }
   return r;
 }
 
@@ -92,7 +96,17 @@ unique_ptr<Regex> Parser::parse_alternate() {
 unique_ptr<Regex> Parser::parse(const string& pattern_) {
   pattern = pattern_;
   idx = 0;
-  return parse_alternate();
+  unique_ptr<Regex> r = parse_alternate();
+
+  if (idx < pattern.size()) {
+    return nullptr;
+  }
+
+  return r;
+}
+
+ParseError Parser::error_info() {
+  return { .pattern = pattern, .idx = idx };
 }
 
 }  // namespace ure

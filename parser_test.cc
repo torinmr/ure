@@ -42,11 +42,9 @@ TEST(ParserTest, RegexCompare) {
 }
 
 TEST(ParserTest, ValidParse) {
-  Parser parser(true);
+  Parser parser;
   unique_ptr<Regex> re = parser.parse("a(bb*)+a|.?");
   ASSERT_NE(re, nullptr);
-  cout << *re << endl;
-
   Regex expected(
     NType::Alternate,
     make_unique<Regex>(
@@ -89,4 +87,23 @@ TEST(ParserTest, ValidParse) {
     )
   );
   ASSERT_EQ(*re, expected);
+}
+
+TEST(ParserTest, InvalidParse) {
+  Parser parser;
+  ASSERT_EQ(parser.parse("abc??"), nullptr);
+  ASSERT_EQ(parser.error_info().idx, 4);
+  ASSERT_EQ(parser.error_info().pattern, "abc??");
+
+  ASSERT_EQ(parser.parse("abc("), nullptr);
+  ASSERT_EQ(parser.error_info().idx, 3);
+
+  ASSERT_EQ(parser.parse("("), nullptr);
+  ASSERT_EQ(parser.error_info().idx, 0);
+
+  ASSERT_EQ(parser.parse("*abc"), nullptr);
+  ASSERT_EQ(parser.error_info().idx, 0);
+
+  ASSERT_EQ(parser.parse("(a)b)"), nullptr);
+  ASSERT_EQ(parser.error_info().idx, 4);
 }
