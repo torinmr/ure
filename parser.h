@@ -9,7 +9,7 @@
 
 // Recursive-descent parser for regular expressions. Implements the following EBNF grammar:
 //
-// Alternate = Concat, [ "|", Alternate ]
+// Alternate = Concat | Empty, [ "|", Alternate ]
 // Concat    = item, [Concat]
 // item      = paren | char | Question | Plus | Star
 // paren     = "(", Alternate, ")"
@@ -19,6 +19,7 @@
 // char      = Wildcard | Literal
 // Wildcard  = "."
 // Literal   = "a" | "b" | ...
+// Empty     = ""
 //
 // Capitalized items are part of the final parsed form, while lowercase items
 // are only used as part of the parsing process.

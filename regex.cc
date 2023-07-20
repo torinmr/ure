@@ -35,6 +35,7 @@ string type_to_str(NType t) {
     case NType::Star: return "Star";
     case NType::Wildcard: return "Wildcard";
     case NType::Literal: return "Literal";
+    case NType::Empty: return "Empty";
     default: return "Unknown type";
   }
 }

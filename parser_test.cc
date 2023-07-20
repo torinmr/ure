@@ -89,6 +89,61 @@ TEST(ParserTest, ValidParse) {
   ASSERT_EQ(*re, expected);
 }
 
+TEST(ParserTest, EmptyParse) {
+  Parser parser;
+
+  ASSERT_EQ(
+    *parser.parse(""),
+    Regex(
+      NType::Alternate,
+      make_unique<Regex>(NType::Empty)
+    )
+  );
+
+  ASSERT_EQ(
+    *parser.parse("|"),
+    Regex(
+      NType::Alternate,
+      make_unique<Regex>(NType::Empty),
+      make_unique<Regex>(
+        NType::Alternate,
+        make_unique<Regex>(NType::Empty)
+      )
+    )
+  );
+
+  ASSERT_EQ(
+    *parser.parse("()"),
+    Regex(
+      NType::Alternate,
+      make_unique<Regex>(
+        NType::Concat,
+        make_unique<Regex>(
+          NType::Alternate,
+          make_unique<Regex>(NType::Empty)
+        )
+      )
+    )
+  );
+
+  ASSERT_EQ(
+    *parser.parse("()*"),
+    Regex(
+      NType::Alternate,
+      make_unique<Regex>(
+        NType::Concat,
+        make_unique<Regex>(
+          NType::Star,
+          make_unique<Regex>(
+            NType::Alternate,
+            make_unique<Regex>(NType::Empty)
+          )
+        )
+      )
+    )
+  );
+}
+
 TEST(ParserTest, InvalidParse) {
   Parser parser;
   ASSERT_EQ(parser.parse("abc??"), nullptr);

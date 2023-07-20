@@ -83,7 +83,9 @@ unique_ptr<Regex> Parser::parse_concat() {
 
 unique_ptr<Regex> Parser::parse_alternate() {
   unique_ptr<Regex> r1 = parse_concat();
-  if (r1 == nullptr) return nullptr;
+  if (r1 == nullptr) {
+    r1 = make_unique<Regex>(NType::Empty);
+  }
   if (!consume('|')) {
     return make_unique<Regex>(NType::Alternate, move(r1));
   }

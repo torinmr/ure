@@ -14,6 +14,7 @@ enum class NType {
   Star,
   Wildcard,
   Literal,
+  Empty,
 };
 
 // Datatype used for parsed regular expressions.
