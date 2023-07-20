@@ -12,6 +12,6 @@ class Ure {
   virtual bool PartialMatch(const std::string& text) = 0;
 };
 
-};
+}  // namespace ure
 
-#endif
+#endif  // URE_INTERFACE_H

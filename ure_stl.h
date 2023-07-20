@@ -24,6 +24,6 @@ class UreStl : public Ure {
   std::regex re;
 };
 
-}
+}  // namespace ure
 
-#endif
+#endif  // URE_STL_H
