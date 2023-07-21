@@ -7,158 +7,67 @@
 using namespace std;
 using namespace ure;
 
-TEST(ParserTest, RegexCompare) {
-  ASSERT_EQ(Regex(NType::Wildcard), Regex(NType::Wildcard));
-  ASSERT_EQ(Regex(NType::Literal, 'a'), Regex(NType::Literal, 'a'));
-  ASSERT_EQ(Regex(NType::Star, make_unique<Regex>(NType::Wildcard)),
-            Regex(NType::Star, make_unique<Regex>(NType::Wildcard)));
-  ASSERT_EQ(Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Wildcard),
-                  make_unique<Regex>(NType::Literal, 'a')),
-            Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Wildcard),
-                  make_unique<Regex>(NType::Literal, 'a')));
-
-  ASSERT_NE(Regex(NType::Literal, 'a'), Regex(NType::Literal, 'b'));
-  ASSERT_NE(Regex(NType::Literal, 'a'), Regex(NType::Wildcard));
-  ASSERT_NE(Regex(NType::Star, make_unique<Regex>(NType::Literal, 'a')),
-            Regex(NType::Star, make_unique<Regex>(NType::Literal, 'b')));
-  ASSERT_NE(Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Wildcard),
-                  make_unique<Regex>(NType::Literal, 'a')),
-            Regex(NType::Question, make_unique<Regex>(NType::Wildcard)));
-  ASSERT_NE(Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Wildcard),
-                  make_unique<Regex>(NType::Literal, 'a')),
-            Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Wildcard),
-                  make_unique<Regex>(NType::Literal, 'b')));
-  ASSERT_NE(Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Literal, 'a'),
-                  make_unique<Regex>(NType::Wildcard)),
-            Regex(NType::Alternate,
-                  make_unique<Regex>(NType::Literal, 'b'),
-                  make_unique<Regex>(NType::Wildcard)));
-}
-
 TEST(ParserTest, ValidParse) {
   Parser parser;
-  unique_ptr<Regex> re = parser.parse("a(bb*)+a|.?");
-  ASSERT_NE(re, nullptr);
-  Regex expected(
-    NType::Alternate,
-    make_unique<Regex>(
-      NType::Concat,
-      make_unique<Regex>(NType::Literal, 'a'),
-      make_unique<Regex>(
-        NType::Concat,
-        make_unique<Regex>(
-          NType::Plus,
-          make_unique<Regex>(
-            NType::Alternate,
-            make_unique<Regex>(
-              NType::Concat,
-              make_unique<Regex>(NType::Literal, 'b'),
-              make_unique<Regex>(
-                NType::Concat,
-                make_unique<Regex>(
-                  NType::Star,
-                  make_unique<Regex>(NType::Literal, 'b')
-                )
-              )
-            )
-          )
-        ),
-        make_unique<Regex>(
-          NType::Concat,
-          make_unique<Regex>(NType::Literal, 'a')
-        )
-      )
-    ),
-    make_unique<Regex>(
-      NType::Alternate,
-      make_unique<Regex>(
-        NType::Concat,
-        make_unique<Regex>(
-          NType::Question,
-          make_unique<Regex>(NType::Wildcard)
-        )
-      )
-    )
-  );
-  ASSERT_EQ(*re, expected);
+  vector<Instruction> re = parser.parse("a(bb*)+a|.?");
+  vector<Instruction> expected = {
+    Instruction::Split(9),
+    Instruction::Literal('a'),
+    Instruction::Literal('b'),
+    Instruction::Split(3),
+    Instruction::Literal('b'),
+    Instruction::Jump(-2),
+    Instruction::Split(-4),
+    Instruction::Literal('a'),
+    Instruction::Jump(3),
+    Instruction::Split(2),
+    Instruction::Wildcard(),
+    Instruction::Match(),
+  };
+  ASSERT_EQ(re, expected);
 }
 
 TEST(ParserTest, EmptyParse) {
   Parser parser;
 
-  ASSERT_EQ(
-    *parser.parse(""),
-    Regex(
-      NType::Alternate,
-      make_unique<Regex>(NType::Empty)
-    )
-  );
+  vector<Instruction> expected = {
+    Instruction::Match()
+  };
+  ASSERT_EQ(parser.parse(""), expected);
+  ASSERT_EQ(parser.parse("()"), expected);
 
-  ASSERT_EQ(
-    *parser.parse("|"),
-    Regex(
-      NType::Alternate,
-      make_unique<Regex>(NType::Empty),
-      make_unique<Regex>(
-        NType::Alternate,
-        make_unique<Regex>(NType::Empty)
-      )
-    )
-  );
+  expected = {
+    Instruction::Split(2),
+    Instruction::Jump(1),
+    Instruction::Match()
+  };
+  ASSERT_EQ(parser.parse("|"), expected);
 
-  ASSERT_EQ(
-    *parser.parse("()"),
-    Regex(
-      NType::Alternate,
-      make_unique<Regex>(
-        NType::Concat,
-        make_unique<Regex>(
-          NType::Alternate,
-          make_unique<Regex>(NType::Empty)
-        )
-      )
-    )
-  );
-
-  ASSERT_EQ(
-    *parser.parse("()*"),
-    Regex(
-      NType::Alternate,
-      make_unique<Regex>(
-        NType::Concat,
-        make_unique<Regex>(
-          NType::Star,
-          make_unique<Regex>(
-            NType::Alternate,
-            make_unique<Regex>(NType::Empty)
-          )
-        )
-      )
-    )
-  );
+  expected = {
+    Instruction::Split(2),
+    Instruction::Jump(-1),
+    Instruction::Match()
+  };
+  ASSERT_EQ(parser.parse("()*"), expected);
 }
 
 TEST(ParserTest, InvalidParse) {
   Parser parser;
-  ASSERT_EQ(parser.parse("abc??"), nullptr);
+  vector<Instruction> empty;
+
+  ASSERT_EQ(parser.parse("abc??"), empty);
   ASSERT_EQ(parser.error_info().idx, 4);
   ASSERT_EQ(parser.error_info().pattern, "abc??");
 
-  ASSERT_EQ(parser.parse("abc("), nullptr);
+  ASSERT_EQ(parser.parse("abc("), empty);
   ASSERT_EQ(parser.error_info().idx, 3);
 
-  ASSERT_EQ(parser.parse("("), nullptr);
+  ASSERT_EQ(parser.parse("("), empty);
   ASSERT_EQ(parser.error_info().idx, 0);
 
-  ASSERT_EQ(parser.parse("*abc"), nullptr);
+  ASSERT_EQ(parser.parse("*abc"), empty);
   ASSERT_EQ(parser.error_info().idx, 0);
 
-  ASSERT_EQ(parser.parse("(a)b)"), nullptr);
+  ASSERT_EQ(parser.parse("(a)b)"), empty);
   ASSERT_EQ(parser.error_info().idx, 4);
 }

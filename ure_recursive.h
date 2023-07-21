@@ -2,6 +2,8 @@
 #define URE_RECURSIVE_H
 
 #include <memory>
+#include <vector>
+
 #include "parser.h"
 #include "ure_interface.h"
 
@@ -19,7 +21,7 @@ class UreRecursive : public Ure {
   ParseError parser_error_info();
 
  private:
-  std::unique_ptr<Regex> re;
+  std::vector<Instruction> re;
   Parser parser;
 };
 

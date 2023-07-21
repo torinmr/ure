@@ -4,31 +4,9 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <vector>
 
-#include "regex.h"
-
-// Recursive-descent parser for regular expressions. Implements the following EBNF grammar:
-//
-// Alternate = Concat | Empty, [ "|", Alternate ]
-// Concat    = item, [Concat]
-// item      = paren | char | Question | Plus | Star
-// paren     = "(", Alternate, ")"
-// Question  = (paren | char), "?"
-// Plus      = (paren | char), "+"
-// Star      = (paren | char), "*"
-// char      = Wildcard | Literal
-// Wildcard  = "."
-// Literal   = "a" | "b" | ...
-// Empty     = ""
-//
-// Capitalized items are part of the final parsed form, while lowercase items
-// are only used as part of the parsing process.
-//
-// Grammar currently supports:
-//   Classical regex operators: |, *, concatenation
-//   Parentheses ()
-//   ? and +
-//   . as a wildcard
+#include "instruction.h"
 
 namespace ure {
 
@@ -38,16 +16,39 @@ struct ParseError {
   std::size_t idx;
 };
 
+// Recursive-descent parser for regular expressions. Compiles parsed regular expression
+// to a bytecode program, see instruction.h.
+//
+// Implements the following EBNF grammar:
+//
+// Alternate = Concat | Empty, [ "|", Alternate ]
+// Concat    = Item, [Concat]
+// Item      = Paren | Char | Question | Plus | Star
+// Paren     = "(", Alternate, ")"
+// Question  = (Paren | Char), "?"
+// Plus      = (Paren | Char), "+"
+// Star      = (Paren | Char), "*"
+// Char      = Wildcard | Literal
+// Wildcard  = "."
+// Literal   = "a" | "b" | ...
+// Empty     = ""
+
+// Grammar currently supports:
+//   Classical regex operators: |, *, concatenation
+//   Parentheses ()
+//   ? and +
+//   . as a wildcard
 class Parser {
  public:
   Parser(bool debug = false) : debug(debug) {}
 
   // Attempt to parse the regular expression.
-  // If successful, return a pointer to a Regex struct.
-  // If unsuccessful, return nullptr and populate error information.
-  std::unique_ptr<Regex> parse(const std::string& pattern);
+  // If successful, returns a vector of instructions.
+  // If unsuccessful, returns an empty vector. (Valid patterns can never produce
+  // an empty instruction vector, as it will at least have a Match instruction.)
+  std::vector<Instruction> parse(const std::string& pattern);
 
-  // Access information about parse errors (only valid if parse() returned nullptr).
+  // Access information about parse errors (only valid if parse() returned empty vector).
   ParseError error_info();
 
  private:
@@ -56,13 +57,13 @@ class Parser {
   bool debug;
 
   bool consume(char c);
-  std::unique_ptr<Regex> parse_alternate();
-  std::unique_ptr<Regex> parse_concat();
-  std::unique_ptr<Regex> parse_item();
-  std::unique_ptr<Regex> parse_paren();
-  std::unique_ptr<Regex> parse_char();
-  std::unique_ptr<Regex> parse_wildcard();
-  std::unique_ptr<Regex> parse_literal();
+  bool parse_alternate(std::vector<Instruction>& program);
+  bool parse_concat(std::vector<Instruction>& program);
+  bool parse_item(std::vector<Instruction>& program);
+  bool parse_paren(std::vector<Instruction>& program);
+  bool parse_char(std::vector<Instruction>& program);
+  bool parse_wildcard(std::vector<Instruction>& program);
+  bool parse_literal(std::vector<Instruction>& program);
 };
 
 }  // namespace ure

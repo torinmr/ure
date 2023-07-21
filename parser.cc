@@ -20,91 +20,134 @@ bool Parser::consume(char c) {
   return false;
 }
 
-unique_ptr<Regex> Parser::parse_literal() {
+// Recursive descent parser that builds up a bytecode program based on the regular
+// expression. Each parse_* function handles an element in the EBNF grammar (described
+// in parser.h), trying to parse characters beginning at pattern[idx].
+// If parsing succeeds, it appends instructions onto the end of progam.
+// If parsing fails, it restore program and idx to their initial state.
+
+bool Parser::parse_literal(vector<Instruction>& program) {
   if (idx < pattern.size() && reserved.count(pattern[idx]) == 0) {
-    unique_ptr<Regex> r = make_unique<Regex>(NType::Literal, pattern[idx]);
+    program.push_back(Instruction::Literal(pattern[idx]));
     if (debug) {
       cout << "Consumed " << pattern[idx] << endl;
     }
     idx++;
-    return r;
+    return true;
   }
 
-  return nullptr;
+  return false;
 }
 
-unique_ptr<Regex> Parser::parse_wildcard() {
-  if (!consume('.')) return nullptr;
-  return make_unique<Regex>(NType::Wildcard);
+bool Parser::parse_wildcard(vector<Instruction>& program) {
+  if (!consume('.')) return false;
+  program.push_back(Instruction::Wildcard());
+  return true;
 }
 
-unique_ptr<Regex> Parser::parse_char() {
-  unique_ptr<Regex> r = parse_wildcard();
-  if (r != nullptr) return r;
-  return parse_literal();
+bool Parser::parse_char(vector<Instruction>& program) {
+  return parse_wildcard(program) || parse_literal(program);
 }
 
-unique_ptr<Regex> Parser::parse_paren() {
-  size_t start_idx = idx;
-  if (!consume('(')) return nullptr;
-  unique_ptr<Regex> r = parse_alternate();
+bool Parser::parse_paren(vector<Instruction>& program) {
+  size_t initial_idx = idx;
+  size_t initial_pc = program.size();
+  if (!consume('(')) return false;
+  parse_alternate(program);
   if (!consume(')')) {
-    idx = start_idx;
-    return nullptr;
+    idx = initial_idx;
+    program.resize(initial_pc);
+    return false;
   }
-  return r;
+  return true;
 }
 
-unique_ptr<Regex> Parser::parse_item() {
-  unique_ptr<Regex> r = parse_paren();
-  if (r == nullptr) {
-    r = parse_char();
-  }
-  if (r == nullptr) return nullptr;
+bool Parser::parse_item(vector<Instruction>& program) {
+  ptrdiff_t initial_pc = program.size();
+  bool parsed = parse_paren(program) || parse_char(program);
+  if (!parsed) return false;
 
   if (consume('?')) {
-    return make_unique<Regex>(NType::Question, move(r));
+    // a? compiles to:
+    //  0 Split 2
+    //  1 Literal a
+    //  2 ...
+    program.insert(program.begin() + initial_pc,
+                   Instruction::Split(program.size() + 1 - initial_pc));
   } else if (consume('+')) {
-    return make_unique<Regex>(NType::Plus, move(r));
+    // a+ compiles to:
+    //  0 Literal a
+    //  1 Split -1
+    //  2 ...
+    program.push_back(Instruction::Split(initial_pc - program.size()));
   } else if (consume('*')) {
-    return make_unique<Regex>(NType::Star, move(r));
-  } else {
-    return r;
+    // a* compiles to:
+    //   0 Split 3
+    //   1 Literal a
+    //   2 Jmp -2
+    //   3 ...
+    program.insert(program.begin() + initial_pc,
+                   Instruction::Split(program.size() + 2 - initial_pc));
+    program.push_back(Instruction::Jump(initial_pc - program.size()));
   }
+
+  return true;
 }
 
-unique_ptr<Regex> Parser::parse_concat() {
-  unique_ptr<Regex> r1 = parse_item();
-  if (r1 == nullptr) return nullptr;
-
-  unique_ptr<Regex> r2 = parse_concat();
-  return make_unique<Regex>(NType::Concat, move(r1), move(r2));  // r2 possibly null
+bool Parser::parse_concat(vector<Instruction>& program) {
+  if (!parse_item(program)) return false;
+  parse_concat(program);
+  return true;
 }
 
-unique_ptr<Regex> Parser::parse_alternate() {
-  unique_ptr<Regex> r1 = parse_concat();
-  if (r1 == nullptr) {
-    r1 = make_unique<Regex>(NType::Empty);
-  }
+// Given regex like "a|b", produces code like:
+//
+//   0 Split 3
+//   1 Literal a
+//   2 Jmp 2
+//   3 Literal b
+//   4 (rest of regex)
+//
+// In the terminal case where the alternate contains only one option, avoids
+// producing any extra bytecode.
+bool Parser::parse_alternate(vector<Instruction>& program) {
+  ptrdiff_t initial_pc = program.size();
+
+  // We don't check the return value of the recursive calls, because we can
+  // always parse to an empty regex.
+  parse_concat(program);
   if (!consume('|')) {
-    return make_unique<Regex>(NType::Alternate, move(r1));
+    // "Alternate" is just a single clause, no special instructions needed.
+    return true;
   }
 
-  unique_ptr<Regex> r2 = parse_alternate();
-  if (r2 == nullptr) return nullptr;
-  return make_unique<Regex>(NType::Alternate, move(r1), move(r2));
+  // Now that we know there are two alternatives, splice a split instruction
+  // back into the program. Inserting in the middle of a vector is inefficient,
+  // but it should be fine unless regexes are extremely long.
+  program.insert(program.begin() + initial_pc,
+                 Instruction::Split(program.size() + 2 - initial_pc));
+
+  // Add the jump instruction. We need to parse what comes next before filling
+  // in the value of the jump offset.
+  ptrdiff_t jmp_pc = program.size();
+  program.push_back(Instruction::Jump(0));
+  parse_alternate(program);
+  program[jmp_pc].offset = program.size() - jmp_pc;
+  return true;
 }
 
-unique_ptr<Regex> Parser::parse(const string& pattern_) {
+vector<Instruction> Parser::parse(const string& pattern_) {
   pattern = pattern_;
   idx = 0;
-  unique_ptr<Regex> r = parse_alternate();
+  vector<Instruction> program;
+  if (!parse_alternate(program)) return {};
+  if (idx < pattern.size()) return {};
+  program.push_back(Instruction::Match());
 
-  if (idx < pattern.size()) {
-    return nullptr;
+  if (debug) {
+    cout << program << endl;
   }
-
-  return r;
+  return program;
 }
 
 ParseError Parser::error_info() {

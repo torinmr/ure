@@ -18,7 +18,7 @@ bool UreRecursive::PartialMatch(const string& text) {
  return false;
 }
 
-bool UreRecursive::parsing_failed() { return re == nullptr; }
+bool UreRecursive::parsing_failed() { return re.empty(); }
 ParseError UreRecursive::parser_error_info() { return parser.error_info(); }
 
 }  // namespace ure

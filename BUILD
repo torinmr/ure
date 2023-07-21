@@ -1,14 +1,14 @@
 cc_library(
-  name = "regex",
-  hdrs = ["regex.h"],
-  srcs = ["regex.cc"],
+  name = "instruction",
+  hdrs = ["instruction.h"],
+  srcs = ["instruction.cc"],
 )
 
 cc_library(
   name = "parser",
   hdrs = ["parser.h"],
   srcs = ["parser.cc"],
-  deps = [":regex"],
+  deps = [":instruction"],
 )
 
 cc_test(
