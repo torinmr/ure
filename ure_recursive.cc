@@ -7,11 +7,18 @@ namespace ure {
 using namespace std;
 
 UreRecursive::UreRecursive(const string& pattern) {
-  Parser parser;
   re = parser.parse(pattern);
 }
 
-bool UreRecursive::FullMatch(const string& text) { return false; }
-bool UreRecursive::PartialMatch(const string& text) { return false; }
+bool UreRecursive::FullMatch(const string& text) {
+  return false;
+}
+
+bool UreRecursive::PartialMatch(const string& text) {
+ return false;
+}
+
+bool UreRecursive::parsing_failed() { return re == nullptr; }
+ParseError UreRecursive::parser_error_info() { return parser.error_info(); }
 
 }  // namespace ure

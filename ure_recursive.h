@@ -15,8 +15,12 @@ class UreRecursive : public Ure {
   bool FullMatch(const std::string& text) override;
   bool PartialMatch(const std::string& text) override;
 
+  bool parsing_failed();
+  ParseError parser_error_info();
+
  private:
   std::unique_ptr<Regex> re;
+  Parser parser;
 };
 
 }  // namespace ure

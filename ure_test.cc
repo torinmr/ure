@@ -15,4 +15,9 @@ TEST(UreTest, TestStl) {
 
 TEST(UreTest, TestRecursive) {
   UreRecursive ure("a(bb)+a");
+  ASSERT_FALSE(ure.parsing_failed());
+
+  UreRecursive bad("a(b");
+  ASSERT_TRUE(bad.parsing_failed());
+  ASSERT_EQ(bad.parser_error_info().idx, 1);
 }
