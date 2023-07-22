@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include "ure_nfa.h"
 #include "ure_recursive.h"
 #include "ure_stl.h"
 
@@ -107,4 +108,20 @@ TEST(UreTest, TestRecursive) {
   ASSERT_EQ(1, bad.parser_error_info().idx);
   
   test_all_regexes<UreStl, UreRecursive>("abc.+*?()", 4, "abcd", 4);
+}
+
+TEST(UreTest, TestNfa) {
+  UreNfa ure("a(bb)+a");
+  ASSERT_FALSE(ure.parsing_failed());
+  ASSERT_TRUE(ure.full_match("abbbba"));
+  ASSERT_FALSE(ure.full_match("abbba"));
+  ASSERT_FALSE(ure.full_match("zzzabbbbazzz"));
+  ASSERT_TRUE(ure.partial_match("zzzabbbbazzz"));
+  ASSERT_FALSE(ure.partial_match("zzzabbbazzz"));
+
+  UreNfa bad("a(b");
+  ASSERT_TRUE(bad.parsing_failed());
+  ASSERT_EQ(1, bad.parser_error_info().idx);
+  
+  test_all_regexes<UreStl, UreNfa>("abc.+*?()", 4, "abcd", 4);
 }

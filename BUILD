@@ -4,16 +4,6 @@ cc_library(
   srcs = ["instruction.cc"],
 )
 
-cc_test(
-  name = "instruction_test",
-  size = "small",
-  srcs = ["instruction_test.cc"],
-  deps = [
-    "@com_google_googletest//:gtest_main",
-    ":instruction",
-  ],
-)
-
 cc_library(
   name = "parser",
   hdrs = ["parser.h"],
@@ -43,6 +33,16 @@ cc_library(
 )
 
 cc_library(
+  name = "ure_nfa",
+  hdrs = ["ure_nfa.h"],
+  srcs = ["ure_nfa.cc"],
+  deps = [
+    ":parser",
+    ":ure_interface",
+  ],
+)
+
+cc_library(
   name = "ure_recursive",
   hdrs = ["ure_recursive.h"],
   srcs = ["ure_recursive.cc"],
@@ -58,6 +58,7 @@ cc_test(
   srcs = ["ure_test.cc"],
   deps = [
     "@com_google_googletest//:gtest_main",
+    ":ure_nfa",
     ":ure_recursive",
     ":ure_stl",
   ],

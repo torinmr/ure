@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstddef>
 #include <iostream>
 
