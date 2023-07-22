@@ -10,15 +10,15 @@ UreRecursive::UreRecursive(const string& pattern) {
   re = parser.parse(pattern);
 }
 
-bool UreRecursive::FullMatch(const string& text) {
+bool UreRecursive::full_match(const string& text) const {
   return false;
 }
 
-bool UreRecursive::PartialMatch(const string& text) {
+bool UreRecursive::partial_match(const string& text) const {
  return false;
 }
 
-bool UreRecursive::parsing_failed() { return re.empty(); }
+bool UreRecursive::parsing_failed() const { return re.empty(); }
 ParseError UreRecursive::parser_error_info() { return parser.error_info(); }
 
 }  // namespace ure

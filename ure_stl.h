@@ -10,17 +10,27 @@ namespace ure {
 // Intended to be used for testing other implementations.
 class UreStl : public Ure {
  public:
-  UreStl(const std::string& pattern) : re(pattern) {}
-
-  bool FullMatch(const std::string& text) override {
-    return std::regex_match(text, re);
+  UreStl(const std::string& pattern) {
+    try {
+      re = std::regex(pattern);
+      parsed = true;
+    } catch (const std::regex_error& e) {
+      parsed = false;
+    }
   }
 
-  bool PartialMatch(const std::string& text) override {
-    return std::regex_search(text, re);
+  bool full_match(const std::string& text) const override {
+    return parsed && std::regex_match(text, re);
   }
+
+  bool partial_match(const std::string& text) const override {
+    return parsed && std::regex_search(text, re);
+  }
+
+  bool parsing_failed() const { return !parsed; }
 
  private:
+  bool parsed;
   std::regex re;
 };
 

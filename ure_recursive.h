@@ -14,10 +14,10 @@ struct Regex;
 class UreRecursive : public Ure {
  public:
   UreRecursive(const std::string& pattern);
-  bool FullMatch(const std::string& text) override;
-  bool PartialMatch(const std::string& text) override;
+  bool full_match(const std::string& text) const override;
+  bool partial_match(const std::string& text) const override;
 
-  bool parsing_failed();
+  bool parsing_failed() const override;
   ParseError parser_error_info();
 
  private:
