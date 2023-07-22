@@ -106,7 +106,7 @@ TEST(UreTest, TestRecursive) {
   UreRecursive bad("a(b");
   ASSERT_TRUE(bad.parsing_failed());
   ASSERT_EQ(1, bad.parser_error_info().idx);
-  
+
   test_all_regexes<UreStl, UreRecursive>("abc.+*?()", 4, "abcd", 4);
 }
 

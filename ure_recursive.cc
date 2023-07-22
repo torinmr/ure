@@ -24,10 +24,6 @@ bool match(const vector<Instruction>& program, const string& text,
     cerr << "Invalid program counter " << pc << ", program.size() is " << program.size() << endl;
     return false;
   }
-  if (idx > text.size()) {
-    cerr << "Invalid idx " << idx << ", text.size() is " << text.size() << endl;
-    return false;
-  }
 
   if (visited[pc][idx]) return false;  // Infinite loop
   visited[pc][idx] = true;
