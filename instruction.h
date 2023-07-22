@@ -18,7 +18,7 @@ enum class IType {
 
 // Bytecode for compiled regular expressions. Each regular expression compiles to a
 // vector of Instructions (see parser.h). For example:
-//  "a*b" -> { Literal('a'), Split(3), Literal('b'), Jump(-2), Match() }
+//  "ab*" -> { Literal('a'), Split(3), Literal('b'), Jump(-2), Match() }
 //
 // Based on Russ Cox's article "Regular Expression Matching: the Virtual Machine Approach":
 // https://swtch.com/~rsc/regexp/regexp2.html. I've made some modifications, like using offsets
@@ -56,10 +56,16 @@ struct Instruction {
 
   std::string str() const;
   bool operator==(const Instruction& other) const;
+
+  // Convert a compiled program from one that does full matching to one
+  // that does partial matching. Works by turning "myregex" into ".*myregex.*".
+  static std::vector<Instruction> to_partial(const std::vector<Instruction>& program);
 };
 
 std::ostream& operator<<(std::ostream& os, const Instruction& inst);
 std::ostream& operator<<(std::ostream& os, const std::vector<Instruction>& program);
+
+
 
 }  // namespace ure
 

@@ -96,10 +96,15 @@ void test_all_regexes(const string& re_chars, int max_re_length,
 TEST(UreTest, TestRecursive) {
   UreRecursive ure("a(bb)+a");
   ASSERT_FALSE(ure.parsing_failed());
+  ASSERT_TRUE(ure.full_match("abbbba"));
+  ASSERT_FALSE(ure.full_match("abbba"));
+  ASSERT_FALSE(ure.full_match("zzzabbbbazzz"));
+  ASSERT_TRUE(ure.partial_match("zzzabbbbazzz"));
+  ASSERT_FALSE(ure.partial_match("zzzabbbazzz"));
 
   UreRecursive bad("a(b");
   ASSERT_TRUE(bad.parsing_failed());
-  ASSERT_EQ(bad.parser_error_info().idx, 1);
-
-  test_all_regexes<UreStl, UreRecursive>("abc.+*?()", 3, "abcd", 3, true);
+  ASSERT_EQ(1, bad.parser_error_info().idx);
+  
+  test_all_regexes<UreStl, UreRecursive>("abc.+*?()", 4, "abcd", 4);
 }

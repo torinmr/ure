@@ -4,6 +4,16 @@ cc_library(
   srcs = ["instruction.cc"],
 )
 
+cc_test(
+  name = "instruction_test",
+  size = "small",
+  srcs = ["instruction_test.cc"],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":instruction",
+  ],
+)
+
 cc_library(
   name = "parser",
   hdrs = ["parser.h"],
@@ -44,7 +54,7 @@ cc_library(
 
 cc_test(
   name = "ure_test",
-  size = "small",
+  size = "medium",
   srcs = ["ure_test.cc"],
   deps = [
     "@com_google_googletest//:gtest_main",

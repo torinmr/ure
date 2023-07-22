@@ -24,7 +24,7 @@ TEST(ParserTest, ValidParse) {
     Instruction::Wildcard(),
     Instruction::Match(),
   };
-  ASSERT_EQ(re, expected);
+  ASSERT_EQ(expected, re);
 }
 
 TEST(ParserTest, EmptyParse) {
@@ -33,41 +33,41 @@ TEST(ParserTest, EmptyParse) {
   vector<Instruction> expected = {
     Instruction::Match()
   };
-  ASSERT_EQ(parser.parse(""), expected);
-  ASSERT_EQ(parser.parse("()"), expected);
+  ASSERT_EQ(expected, parser.parse(""));
+  ASSERT_EQ(expected, parser.parse("()"));
 
   expected = {
     Instruction::Split(2),
     Instruction::Jump(1),
     Instruction::Match()
   };
-  ASSERT_EQ(parser.parse("|"), expected);
+  ASSERT_EQ(expected, parser.parse("|"));
 
   expected = {
     Instruction::Split(2),
     Instruction::Jump(-1),
     Instruction::Match()
   };
-  ASSERT_EQ(parser.parse("()*"), expected);
+  ASSERT_EQ(expected, parser.parse("()*"));
 }
 
 TEST(ParserTest, InvalidParse) {
   Parser parser;
   vector<Instruction> empty;
 
-  ASSERT_EQ(parser.parse("abc??"), empty);
-  ASSERT_EQ(parser.error_info().idx, 4);
-  ASSERT_EQ(parser.error_info().pattern, "abc??");
+  ASSERT_EQ(empty, parser.parse("abc??"));
+  ASSERT_EQ(4, parser.error_info().idx);
+  ASSERT_EQ("abc??", parser.error_info().pattern);
 
-  ASSERT_EQ(parser.parse("abc("), empty);
-  ASSERT_EQ(parser.error_info().idx, 3);
+  ASSERT_EQ(empty, parser.parse("abc("));
+  ASSERT_EQ(3, parser.error_info().idx);
 
-  ASSERT_EQ(parser.parse("("), empty);
-  ASSERT_EQ(parser.error_info().idx, 0);
+  ASSERT_EQ(empty, parser.parse("("));
+  ASSERT_EQ(0, parser.error_info().idx);
 
-  ASSERT_EQ(parser.parse("*abc"), empty);
-  ASSERT_EQ(parser.error_info().idx, 0);
+  ASSERT_EQ(empty, parser.parse("*abc"));
+  ASSERT_EQ(0, parser.error_info().idx);
 
-  ASSERT_EQ(parser.parse("(a)b)"), empty);
-  ASSERT_EQ(parser.error_info().idx, 4);
+  ASSERT_EQ(empty, parser.parse("(a)b)"));
+  ASSERT_EQ(4, parser.error_info().idx);
 }
