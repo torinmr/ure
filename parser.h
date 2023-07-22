@@ -41,6 +41,11 @@ struct ParseError {
 //   ? and +
 //   . as a wildcard
 //   Escapes for reserved characters: \., \\, \?, etc.
+//
+// Next up:
+//   Predefined character classes (\d, etc.), at least the most common ones.
+//   User-defined character classes ([a-z], [^@], etc.)
+//   Anchors (^, $)
 class Parser {
  public:
   Parser(bool debug = false) : debug(debug) {}
