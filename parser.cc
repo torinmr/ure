@@ -7,7 +7,7 @@ namespace ure {
 using namespace std;
 
 // Characters that can't be a normal unescaped literal.
-set<char> reserved = { '(', ')', '|', '?', '+', '*', '.' };
+set<char> reserved = { '(', ')', '|', '?', '+', '*', '.', '\\' };
 
 bool Parser::consume(char c) {
   if (idx < pattern.size() && pattern[idx] == c) {
@@ -39,6 +39,22 @@ bool Parser::parse_literal(vector<Instruction>& program) {
   return false;
 }
 
+
+bool Parser::parse_escape(vector<Instruction>& program) {
+  if (!consume('\\')) return false;
+  if (idx < pattern.size() && reserved.count(pattern[idx]) == 1) {
+    program.push_back(Instruction::Literal(pattern[idx]));
+    if (debug) {
+      cout << "Consumed escaped " << pattern[idx] << endl;
+    }
+    idx++;
+    return true;
+  }
+
+  idx--;  // unconsume the "\"
+  return false;
+}
+
 bool Parser::parse_wildcard(vector<Instruction>& program) {
   if (!consume('.')) return false;
   program.push_back(Instruction::Wildcard());
@@ -46,7 +62,7 @@ bool Parser::parse_wildcard(vector<Instruction>& program) {
 }
 
 bool Parser::parse_char(vector<Instruction>& program) {
-  return parse_wildcard(program) || parse_literal(program);
+  return parse_escape(program) || parse_wildcard(program) || parse_literal(program);
 }
 
 bool Parser::parse_paren(vector<Instruction>& program) {

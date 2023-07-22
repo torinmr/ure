@@ -25,6 +25,20 @@ TEST(ParserTest, ValidParse) {
     Instruction::Match(),
   };
   ASSERT_EQ(expected, re);
+
+  re = parser.parse(R"delim(\(\)\|\?\+\*\.\\)delim");
+  expected = {
+    Instruction::Literal('('),
+    Instruction::Literal(')'),
+    Instruction::Literal('|'),
+    Instruction::Literal('?'),
+    Instruction::Literal('+'),
+    Instruction::Literal('*'),
+    Instruction::Literal('.'),
+    Instruction::Literal('\\'),
+    Instruction::Match(),
+  };
+  ASSERT_EQ(expected, re);
 }
 
 TEST(ParserTest, EmptyParse) {
@@ -70,4 +84,7 @@ TEST(ParserTest, InvalidParse) {
 
   ASSERT_EQ(empty, parser.parse("(a)b)"));
   ASSERT_EQ(4, parser.error_info().idx);
+
+  ASSERT_EQ(empty, parser.parse("ab\\a"));
+  ASSERT_EQ(2, parser.error_info().idx);
 }

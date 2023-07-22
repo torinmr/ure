@@ -41,6 +41,11 @@ vector<string> forbidden_sequences{
   "?*",
   "??",
   "?+",
+  // Character classes we don't yet support.
+  "\\a",
+  "\\b",
+  "\\c",
+  "\\d",
 };
 
 void test_all_patterns(const Ure& reference_re, const Ure& test_re,
@@ -107,7 +112,7 @@ TEST(UreTest, TestRecursive) {
   ASSERT_TRUE(bad.parsing_failed());
   ASSERT_EQ(1, bad.parser_error_info().idx);
 
-  test_all_regexes<UreStl, UreRecursive>("abc.+*?()|", 4, "abcd", 4);
+  test_all_regexes<UreStl, UreRecursive>("abc.+*?()|\\", 4, "abcd", 4);
 }
 
 TEST(UreTest, TestNfa) {
@@ -123,5 +128,5 @@ TEST(UreTest, TestNfa) {
   ASSERT_TRUE(bad.parsing_failed());
   ASSERT_EQ(1, bad.parser_error_info().idx);
   
-  test_all_regexes<UreStl, UreNfa>("abc.+*?()|", 4, "abcd", 4);
+  test_all_regexes<UreStl, UreNfa>("abc.+*?()|\\", 4, "abcd", 4);
 }

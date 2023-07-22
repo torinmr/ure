@@ -28,9 +28,11 @@ struct ParseError {
 // Question  = (Paren | Char), "?"
 // Plus      = (Paren | Char), "+"
 // Star      = (Paren | Char), "*"
-// Char      = Wildcard | Literal
+// Char      = Wildcard | Literal | Escape
 // Wildcard  = "."
-// Literal   = "a" | "b" | ...
+// Literal   = "a" | "b" | ... (not ReservedLiteral)
+// Escape    = "\", ReservedLiteral
+// ReservedLiteral = "." | "(" | "\" | ...
 // Empty     = ""
 
 // Grammar currently supports:
@@ -38,6 +40,7 @@ struct ParseError {
 //   Parentheses ()
 //   ? and +
 //   . as a wildcard
+//   Escapes for reserved characters: \., \\, \?, etc.
 class Parser {
  public:
   Parser(bool debug = false) : debug(debug) {}
@@ -64,6 +67,7 @@ class Parser {
   bool parse_char(std::vector<Instruction>& program);
   bool parse_wildcard(std::vector<Instruction>& program);
   bool parse_literal(std::vector<Instruction>& program);
+  bool parse_escape(std::vector<Instruction>& program);
 };
 
 }  // namespace ure
