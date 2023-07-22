@@ -57,9 +57,8 @@ struct Instruction {
   std::string str() const;
   bool operator==(const Instruction& other) const;
 
-  // Convert a compiled program from one that does full matching to one
-  // that does partial matching. Works by turning "myregex" into ".*myregex.*".
-  static std::vector<Instruction> to_partial(const std::vector<Instruction>& program);
+  // Compiled instructions for ".*".
+  static const std::vector<Instruction> dot_star;
 };
 
 std::ostream& operator<<(std::ostream& os, const Instruction& inst);
