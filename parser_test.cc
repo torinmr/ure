@@ -87,4 +87,7 @@ TEST(ParserTest, InvalidParse) {
 
   ASSERT_EQ(empty, parser.parse("ab\\a"));
   ASSERT_EQ(2, parser.error_info().idx);
+
+  // Actually valid - any non-alphanumeric character can be escaped.
+  ASSERT_NE(empty, parser.parse("ab\\#"));
 }

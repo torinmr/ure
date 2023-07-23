@@ -1,3 +1,4 @@
+#include <cctype>
 #include <iostream>
 #include <set>
 #include "parser.h"
@@ -42,7 +43,7 @@ bool Parser::parse_literal(vector<Instruction>& program) {
 
 bool Parser::parse_escape(vector<Instruction>& program) {
   if (!consume('\\')) return false;
-  if (idx < pattern.size() && reserved.count(pattern[idx]) == 1) {
+  if (idx < pattern.size() && !isalnum(pattern[idx])) {
     program.push_back(Instruction::Literal(pattern[idx]));
     if (debug) {
       cout << "Consumed escaped " << pattern[idx] << endl;
