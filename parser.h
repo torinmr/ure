@@ -21,19 +21,30 @@ struct ParseError {
 //
 // Implements the following EBNF grammar:
 //
-// Alternate = Concat | Empty, [ "|", Alternate ]
-// Concat    = Item, [Concat]
-// Item      = Paren | Char | Question | Plus | Star
-// Paren     = "(", Alternate, ")"
-// Question  = (Paren | Char), "?"
-// Plus      = (Paren | Char), "+"
-// Star      = (Paren | Char), "*"
-// Char      = Wildcard | Literal | Escape
-// Wildcard  = "."
-// Literal   = "a" | "b" | ... (not ReservedLiteral)
-// Escape    = "\", ReservedLiteral
-// ReservedLiteral = "." | "(" | "\" | ...
-// Empty     = ""
+// Alternate            = Concat | Empty, [ "|", Alternate ]
+// Concat               = Item, [Concat]
+// Item                 = Paren | Char | Question | Plus | Star
+// Paren                = "(", Alternate, ")"
+// Question             = (Paren | Char), "?"
+// Plus                 = (Paren | Char), "+"
+// Star                 = (Paren | Char), "*"
+// Char                 = Wildcard | Literal | Escape | Class
+// Wildcard             = "."
+// Literal              = "a" | "b" | ... (not ReservedLiteral)
+// Escape               = "\", (NonAlphaNum | BuiltInClass)
+// ReservedLiteral      = "." | "(" | "\" | ...
+// NonAlphaNum          = (all characters except a-zA-Z0-9)
+// Empty                = ""
+// Class                = "[", (NegatedClass | Class) "]"
+// NegatedClass         = "^", ClassContents
+// ClassContents        = ["-"], [ClassElements], ["-"]
+// ClassElements        = ClassElement, [ClassElements]
+// ClassElement         = ClassRange | ClassChar
+// ClassRange           = ClassChar, "-", ClassChar
+// ClassChar            = ClassEscape | ClassLiteral
+// ClassEscape          = "\", NonAlphaNum
+// ClassLiteral         = "a" | "b" | ... (not "]", "\", "-")
+// BuiltInClass         = "d" | "s" | ...
 
 // Grammar currently supports:
 //   Classical regex operators: |, *, concatenation
@@ -42,9 +53,11 @@ struct ParseError {
 //   . as a wildcard
 //   Escapes for reserved characters: \., \\, \?, etc.
 //
-// Next up:
+// Currently working on:
 //   Predefined character classes (\d, etc.), at least the most common ones.
 //   User-defined character classes ([a-z], [^@], etc.)
+//
+// Future work:
 //   Anchors (^, $)
 class Parser {
  public:
