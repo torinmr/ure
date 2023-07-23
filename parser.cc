@@ -148,7 +148,7 @@ bool Parser::parse_alternate(vector<Instruction>& program) {
   ptrdiff_t jmp_pc = program.size();
   program.push_back(Instruction::Jump(0));
   parse_alternate(program);
-  program[jmp_pc].offset = program.size() - jmp_pc;
+  program[jmp_pc].arg.offset = program.size() - jmp_pc;
   return true;
 }
 

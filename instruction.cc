@@ -21,10 +21,10 @@ string type_to_str(IType t) {
 string Instruction::str() const {
   string s = type_to_str(type);
   switch (type) {
-    case IType::Literal: return s + " " + c;
+    case IType::Literal: return s + " " + arg.c;
     case IType::Wildcard: return s;
-    case IType::Jump: return s + " " + to_string(offset);
-    case IType::Split: return s + " " + to_string(offset);
+    case IType::Jump: return s + " " + to_string(arg.offset);
+    case IType::Split: return s + " " + to_string(arg.offset);
     case IType::Match: return s;
     default: return "Unknown instruction type";
   }
@@ -42,7 +42,17 @@ ostream& operator<<(ostream& os, const vector<Instruction>& program) {
 }
 
 bool Instruction::operator==(const Instruction& other) const {
-  return type == other.type && c == other.c && offset == other.offset;
+  if (type != other.type) return false;
+  switch (type) {
+    case IType::Literal: return arg.c == other.arg.c;
+    case IType::Wildcard: return true;
+    case IType::Jump: return arg.offset == other.arg.offset;
+    case IType::Split: return arg.offset == other.arg.offset;
+    case IType::Match: return true;
+    default:
+      cout << "Unknown type" << endl;
+      return false;
+  }
 }
 
 const vector<Instruction> Instruction::dot_star{

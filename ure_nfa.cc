@@ -68,7 +68,7 @@ bool match(const vector<Instruction>& program, const string& text, bool partial 
       const Instruction& inst = program[pc];
       switch (inst.type) {
         case IType::Literal:
-          if (idx < text.size() && inst.c == text[idx]) {
+          if (idx < text.size() && inst.arg.c == text[idx]) {
             next_threads.add(pc+1);
           }
           break;
@@ -78,11 +78,11 @@ bool match(const vector<Instruction>& program, const string& text, bool partial 
           }
           break;
         case IType::Jump:
-          threads.add(pc + inst.offset);
+          threads.add(pc + inst.arg.offset);
           break;
         case IType::Split:
           threads.add(pc+1);
-          threads.add(pc + inst.offset);
+          threads.add(pc + inst.arg.offset);
           break;
         case IType::Match:
           if (partial || idx == text.size()) return true;

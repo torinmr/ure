@@ -26,12 +26,19 @@ enum class IType {
 // Instruction.
 struct Instruction {
   IType type;
-  char c;
-  std::ptrdiff_t offset;
+
+  union Argument {
+    char c;
+    std::ptrdiff_t offset;
+  };
+  Argument arg;
 
   // Consume the character c.
   static Instruction Literal(char c) {
-    return { IType::Literal, c };
+    Instruction inst;
+    inst.type = IType::Literal;
+    inst.arg.c = c;
+    return inst;
   }
 
   // Consume any single character ("." wildcard).
@@ -41,12 +48,18 @@ struct Instruction {
 
   // Jump forward/backward in bytecode program by offset instructions.
   static Instruction Jump(std::ptrdiff_t offset) {
-    return { IType::Jump, 0, offset };
+    Instruction inst;
+    inst.type = IType::Jump;
+    inst.arg.offset = offset;
+    return inst;
   }
 
   // Either jump to the offset, or continue on to the next instruction.
   static Instruction Split(std::ptrdiff_t offset) {
-    return { IType::Split, 0, offset };
+    Instruction inst;
+    inst.type = IType::Split;
+    inst.arg.offset = offset;
+    return inst;
   }
 
   // Regular expression matched!
