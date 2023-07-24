@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -13,12 +14,30 @@ namespace ure {
 enum class IType {
   Literal,
   Wildcard,
+  Class,
   Jump,
   Split,
   Match,
 };
 
 const std::set<char> supported_built_in_classes = { 'd', 'D', 's', 'S', 'w', 'W' };
+
+class CharacterClass {
+  public:
+   CharacterClass() {};
+   CharacterClass(bool negated, std::vector<char> characters,
+                  std::vector<std::pair<char, char>> ranges)
+     : negated(negated), characters(characters), ranges(ranges) {}
+
+   bool match(char c) const;
+
+   bool operator==(const CharacterClass& other) const;
+   std::string str() const;
+
+   bool negated;
+   std::vector<char> characters;
+   std::vector<std::pair<char, char>> ranges;
+};
 
 // Bytecode for compiled regular expressions. Each regular expression compiles to a
 // vector of Instructions (see parser.h). For example:
@@ -31,49 +50,35 @@ const std::set<char> supported_built_in_classes = { 'd', 'D', 's', 'S', 'w', 'W'
 struct Instruction {
   IType type;
 
-  union Argument {
+  union {
     char c;
     std::ptrdiff_t offset;
+    std::unique_ptr<const CharacterClass> cclass;
   };
-  Argument arg;
+
+  Instruction() {}
+  Instruction(const Instruction& other);
+  Instruction& operator=(const Instruction& other);
+  ~Instruction();
 
   // Consume the character c.
-  static Instruction Literal(char c) {
-    Instruction inst;
-    inst.type = IType::Literal;
-    inst.arg.c = c;
-    return inst;
-  }
+  static Instruction Literal(char c);
 
   // Consume a single character matching the wildcard or built-in character class.
-  static Instruction Wildcard(char c) {
-    assert(supported_built_in_classes.count(c) == 1 || c == '.' || c == '*');
-    Instruction inst;
-    inst.type = IType::Wildcard;
-    inst.arg.c = c;
-    return inst;
-  }
+  static Instruction Wildcard(char c);
+
+  // Consume a single character matching the provided character class.
+  static Instruction Class(std::unique_ptr<CharacterClass> character_class);
+  static Instruction Class(const CharacterClass& character_class);
 
   // Jump forward/backward in bytecode program by offset instructions.
-  static Instruction Jump(std::ptrdiff_t offset) {
-    Instruction inst;
-    inst.type = IType::Jump;
-    inst.arg.offset = offset;
-    return inst;
-  }
+  static Instruction Jump(std::ptrdiff_t offset);
 
   // Either jump to the offset, or continue on to the next instruction.
-  static Instruction Split(std::ptrdiff_t offset) {
-    Instruction inst;
-    inst.type = IType::Split;
-    inst.arg.offset = offset;
-    return inst;
-  }
+  static Instruction Split(std::ptrdiff_t offset);
 
   // Regular expression matched!
-  static Instruction Match() {
-    return { IType::Match };
-  }
+  static Instruction Match();
 
   bool match_wildcard(char c) const;
 
@@ -82,6 +87,9 @@ struct Instruction {
 
   // Compiled instructions to match any string. Used for partial_match implementation.
   static const std::vector<Instruction> match_all;
+
+ private:
+  Instruction(std::unique_ptr<CharacterClass> character_class);
 };
 
 std::ostream& operator<<(std::ostream& os, const Instruction& inst);

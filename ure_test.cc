@@ -129,6 +129,7 @@ TEST(UreTest, TestRecursive) {
   ASSERT_EQ(1, bad.parser_error_info().idx);
 
   ASSERT_TRUE(UreRecursive("abc").partial_match("\nabc\n"));
+
   test_class<UreStl, UreRecursive>(".");
   test_class<UreStl, UreNfa>("\\d");
   test_class<UreStl, UreNfa>("\\D");
@@ -136,6 +137,26 @@ TEST(UreTest, TestRecursive) {
   test_class<UreStl, UreNfa>("\\S");
   test_class<UreStl, UreNfa>("\\w");
   test_class<UreStl, UreNfa>("\\W");
+
+  test_class<UreStl, UreNfa>("[ab]");
+  test_class<UreStl, UreNfa>("[^ab]");
+  test_class<UreStl, UreNfa>("[a-z]");
+  test_class<UreStl, UreNfa>("[a-zA-Z]");
+  test_class<UreStl, UreNfa>("[^a A-Z$0-9]");
+  test_class<UreStl, UreNfa>("[]");
+  test_class<UreStl, UreNfa>("[^]");
+  test_class<UreStl, UreNfa>("[^^]");
+  test_class<UreStl, UreNfa>("[a-]");
+  test_class<UreStl, UreNfa>("[^-a]");
+  test_class<UreStl, UreNfa>("[\\^]");
+  test_class<UreStl, UreNfa>("[^\\^]");
+  test_class<UreStl, UreNfa>("[a\\-b]");
+  test_class<UreStl, UreNfa>("[\\-a]");
+  test_class<UreStl, UreNfa>("[\\\\]");
+  test_class<UreStl, UreNfa>("[\\]]");
+  test_class<UreStl, UreNfa>("[.*?|+()]");
+  test_class<UreStl, UreNfa>("[aa]");
+  test_class<UreStl, UreNfa>("[a-za-z]");
 
   test_all_regexes<UreStl, UreRecursive>("abc.+*?()|\\", 4, "abcd", 4);
 }
@@ -161,6 +182,26 @@ TEST(UreTest, TestNfa) {
   test_class<UreStl, UreNfa>("\\S");
   test_class<UreStl, UreNfa>("\\w");
   test_class<UreStl, UreNfa>("\\W");
-  
+
+  test_class<UreStl, UreNfa>("[ab]");
+  test_class<UreStl, UreNfa>("[^ab]");
+  test_class<UreStl, UreNfa>("[a-z]");
+  test_class<UreStl, UreNfa>("[a-zA-Z]");
+  test_class<UreStl, UreNfa>("[^a A-Z$0-9]");
+  test_class<UreStl, UreNfa>("[]");
+  test_class<UreStl, UreNfa>("[^]");
+  test_class<UreStl, UreNfa>("[^^]");
+  test_class<UreStl, UreNfa>("[a-]");
+  test_class<UreStl, UreNfa>("[^-a]");
+  test_class<UreStl, UreNfa>("[\\^]");
+  test_class<UreStl, UreNfa>("[^\\^]");
+  test_class<UreStl, UreNfa>("[a\\-b]");
+  test_class<UreStl, UreNfa>("[\\-a]");
+  test_class<UreStl, UreNfa>("[\\\\]");
+  test_class<UreStl, UreNfa>("[\\]]");
+  test_class<UreStl, UreNfa>("[.*?|+()]");
+  test_class<UreStl, UreNfa>("[aa]");
+  test_class<UreStl, UreNfa>("[a-za-z]");
+
   test_all_regexes<UreStl, UreNfa>("abc.+*?()|\\", 4, "abcd", 4);
 }

@@ -31,7 +31,7 @@ bool match(const vector<Instruction>& program, const string& text,
   const Instruction& inst = program[pc];
   switch (inst.type) {
     case IType::Literal:
-      if (idx < text.size() && inst.arg.c == text[idx]) {
+      if (idx < text.size() && inst.c == text[idx]) {
         return match(program, text, visited, pc + 1, idx + 1, partial);
       }
       return false;
@@ -40,11 +40,16 @@ bool match(const vector<Instruction>& program, const string& text,
         return match(program, text, visited, pc + 1, idx + 1, partial);
       }
       return false;
+    case IType::Class:
+      if (idx < text.size() && inst.cclass->match(text[idx])) {
+        return match(program, text, visited, pc + 1, idx + 1, partial);
+      }
+      return false;
     case IType::Jump:
-      return match(program, text, visited, pc + inst.arg.offset, idx, partial);
+      return match(program, text, visited, pc + inst.offset, idx, partial);
     case IType::Split:
       return match(program, text, visited, pc + 1, idx, partial) ||
-             match(program, text, visited, pc + inst.arg.offset, idx, partial);
+             match(program, text, visited, pc + inst.offset, idx, partial);
     case IType::Match:
       return partial || idx == text.size();
     default:

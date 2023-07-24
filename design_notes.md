@@ -37,6 +37,7 @@ I'd propose the following rules for my version:
 * ^ must be escaped if it's the first character, otherwise it can be unescaped.
 * ] must always be escaped. []a] will be parsed as [] followed by some junk that
   fails to parse.
+* [ must always be escaped.
 * '-' can be placed unescaped at beginning or end, or right after ^. In any other 
   position where it can't form a valid ranges it's an error.
 * \ must always be escaped.
@@ -51,7 +52,7 @@ ClassElement         = ClassRange | ClassChar
 ClassRange           = ClassChar, "-", ClassChar
 ClassChar            = ClassEscape | ClassLiteral
 ClassEscape          = "\", NonAlphaNum
-ClassLiteral         = "a" | "b" | ... (not "]", "\", "-")
+ClassLiteral         = "a" | "b" | ... (not "]", "\", "-", "[")
 
 Also, we need to add [, ] to ReservedLiteral.
 

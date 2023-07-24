@@ -52,9 +52,7 @@ struct ParseError {
 //   ? and +
 //   . as a wildcard
 //   Escapes for reserved characters: \., \\, \?, etc.
-//
-// Currently working on:
-//   Predefined character classes (\d, etc.), at least the most common ones.
+//   Predefined character classes: \d, \D, \w, \W, \s, \S
 //   User-defined character classes ([a-z], [^@], etc.)
 //
 // Future work:
@@ -86,6 +84,11 @@ class Parser {
   bool parse_wildcard(std::vector<Instruction>& program);
   bool parse_literal(std::vector<Instruction>& program);
   bool parse_escape(std::vector<Instruction>& program);
+  bool parse_class(std::vector<Instruction>& program);
+  bool parse_class_element(CharacterClass& cclass);
+  bool parse_class_char(char& c);
+  bool parse_class_literal(char& c);
+  bool parse_class_escape(char& c);
 };
 
 }  // namespace ure

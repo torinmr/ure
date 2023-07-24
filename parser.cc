@@ -10,6 +10,8 @@ using namespace std;
 // Characters that can't be a normal unescaped literal.
 set<char> reserved = { '(', ')', '|', '?', '+', '*', '.', '\\', '[', ']' };
 
+// Characters that can't be used unescaped within classes.
+set<char> class_reserved = { '[', ']', '\\', '-' };
 
 bool Parser::consume(char c) {
   if (idx < pattern.size() && pattern[idx] == c) {
@@ -27,6 +29,85 @@ bool Parser::consume(char c) {
 // in parser.h), trying to parse characters beginning at pattern[idx].
 // If parsing succeeds, it appends instructions onto the end of progam.
 // If parsing fails, it restore program and idx to their initial state.
+bool Parser::parse_class_escape(char& c) {
+  if (!consume('\\')) return false;
+  if (idx < pattern.size() && !isalnum(pattern[idx])) {
+    c = pattern[idx];
+    if (debug) {
+      cout << "Consumed class escape " << c << endl;
+    }
+    idx++;
+    return true;
+  }
+
+  idx--;  // unconsume the "\"
+  return false;
+}
+
+bool Parser::parse_class_literal(char& c) {
+  if (idx < pattern.size() && class_reserved.count(pattern[idx]) == 0) {
+    c = pattern[idx];
+    if (debug) {
+      cout << "Consumed class literal " << pattern[idx] << endl;
+    }
+    idx++;
+    return true;
+  }
+
+  return false;
+}
+
+bool Parser::parse_class_char(char& c) {
+  return parse_class_escape(c) || parse_class_literal(c);
+}
+
+bool Parser::parse_class_element(CharacterClass& cclass) {
+  char c1 {}, c2 {};
+  // Must always start with a valid character.
+  if (!parse_class_char(c1)) return false;
+
+  size_t initial_idx = idx;
+  // If not followed by a hyphen, it's a single charecter, not a range.
+  if (!consume('-')) {
+    cclass.characters.push_back(c1);
+    return true;
+  }
+
+  // If we can't parse what comes after the hyphen, maybe the hyphen
+  // wasn't part of a range after all (like in [a-]).
+  if (!parse_class_char(c2)) {
+    cclass.characters.push_back(c1);
+    idx = initial_idx;
+    return true;
+  }
+
+  cclass.ranges.push_back({c1, c2});
+  return true;
+}
+
+bool Parser::parse_class(vector<Instruction>& program) {
+  size_t initial_idx = idx;
+  if (!consume('[')) return false;
+
+  unique_ptr<CharacterClass> cclass = make_unique<CharacterClass>();
+  cclass->negated = consume('^');
+  if (consume('-')) {
+    cclass->characters.push_back('-');
+  }
+
+  while (parse_class_element(*cclass)) {}
+
+  if (consume('-')) {
+    cclass->characters.push_back('-');
+  }
+  if (!consume(']')) {
+    idx = initial_idx;
+    return false;
+  }
+
+  program.push_back(Instruction::Class(move(cclass)));
+  return true;
+}
 
 bool Parser::parse_literal(vector<Instruction>& program) {
   if (idx < pattern.size() && reserved.count(pattern[idx]) == 0) {
@@ -40,7 +121,6 @@ bool Parser::parse_literal(vector<Instruction>& program) {
 
   return false;
 }
-
 
 bool Parser::parse_escape(vector<Instruction>& program) {
   if (!consume('\\')) return false;
@@ -71,7 +151,10 @@ bool Parser::parse_wildcard(vector<Instruction>& program) {
 }
 
 bool Parser::parse_char(vector<Instruction>& program) {
-  return parse_escape(program) || parse_wildcard(program) || parse_literal(program);
+  return parse_escape(program)
+    || parse_wildcard(program)
+    || parse_literal(program)
+    || parse_class(program);
 }
 
 bool Parser::parse_paren(vector<Instruction>& program) {
@@ -157,7 +240,7 @@ bool Parser::parse_alternate(vector<Instruction>& program) {
   ptrdiff_t jmp_pc = program.size();
   program.push_back(Instruction::Jump(0));
   parse_alternate(program);
-  program[jmp_pc].arg.offset = program.size() - jmp_pc;
+  program[jmp_pc].offset = program.size() - jmp_pc;
   return true;
 }
 
@@ -167,10 +250,10 @@ vector<Instruction> Parser::parse(const string& pattern_) {
   vector<Instruction> program;
   if (!parse_alternate(program)) return {};
   if (idx < pattern.size()) return {};
-  program.push_back(Instruction::Match());
 
+  program.push_back(Instruction::Match());
   if (debug) {
-    cout << program << endl;
+    cout << "Finished parsing " << program << endl;
   }
   return program;
 }
