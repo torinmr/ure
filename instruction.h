@@ -1,8 +1,10 @@
 #ifndef INSTRUCTION_H
 #define INSTRUCTION_H
 
+#include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -15,6 +17,8 @@ enum class IType {
   Split,
   Match,
 };
+
+const std::set<char> supported_built_in_classes = { 'd', 'D', 's', 'S', 'w', 'W' };
 
 // Bytecode for compiled regular expressions. Each regular expression compiles to a
 // vector of Instructions (see parser.h). For example:
@@ -41,9 +45,13 @@ struct Instruction {
     return inst;
   }
 
-  // Consume any single character ("." wildcard).
-  static Instruction Wildcard() {
-    return { IType::Wildcard };
+  // Consume a single character matching the wildcard or built-in character class.
+  static Instruction Wildcard(char c) {
+    assert(supported_built_in_classes.count(c) == 1 || c == '.' || c == '*');
+    Instruction inst;
+    inst.type = IType::Wildcard;
+    inst.arg.c = c;
+    return inst;
   }
 
   // Jump forward/backward in bytecode program by offset instructions.
@@ -67,11 +75,13 @@ struct Instruction {
     return { IType::Match };
   }
 
+  bool match_wildcard(char c) const;
+
   std::string str() const;
   bool operator==(const Instruction& other) const;
 
-  // Compiled instructions for ".*".
-  static const std::vector<Instruction> dot_star;
+  // Compiled instructions to match any string. Used for partial_match implementation.
+  static const std::vector<Instruction> match_all;
 };
 
 std::ostream& operator<<(std::ostream& os, const Instruction& inst);

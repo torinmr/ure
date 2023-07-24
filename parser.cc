@@ -8,7 +8,8 @@ namespace ure {
 using namespace std;
 
 // Characters that can't be a normal unescaped literal.
-set<char> reserved = { '(', ')', '|', '?', '+', '*', '.', '\\' };
+set<char> reserved = { '(', ')', '|', '?', '+', '*', '.', '\\', '[', ']' };
+
 
 bool Parser::consume(char c) {
   if (idx < pattern.size() && pattern[idx] == c) {
@@ -43,7 +44,14 @@ bool Parser::parse_literal(vector<Instruction>& program) {
 
 bool Parser::parse_escape(vector<Instruction>& program) {
   if (!consume('\\')) return false;
-  if (idx < pattern.size() && !isalnum(pattern[idx])) {
+  if (idx < pattern.size() && supported_built_in_classes.count(pattern[idx]) == 1) {
+    program.push_back(Instruction::Wildcard(pattern[idx]));
+    if (debug) {
+      cout << "Consumed built-in character class " << pattern[idx] << endl;
+    }
+    idx++;
+    return true;
+  } else if (idx < pattern.size() && !isalnum(pattern[idx])) {
     program.push_back(Instruction::Literal(pattern[idx]));
     if (debug) {
       cout << "Consumed escaped " << pattern[idx] << endl;
@@ -58,7 +66,7 @@ bool Parser::parse_escape(vector<Instruction>& program) {
 
 bool Parser::parse_wildcard(vector<Instruction>& program) {
   if (!consume('.')) return false;
-  program.push_back(Instruction::Wildcard());
+  program.push_back(Instruction::Wildcard('.'));
   return true;
 }
 

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -41,11 +42,10 @@ vector<string> forbidden_sequences{
   "?*",
   "??",
   "?+",
-  // Character classes we don't yet support.
+  // Character classes we don't support.
   "\\a",
   "\\b",
   "\\c",
-  "\\d",
 };
 
 void test_all_patterns(const Ure& reference_re, const Ure& test_re,
@@ -99,6 +99,22 @@ void test_all_regexes(const string& re_chars, int max_re_length,
   }
 }
 
+// Test a character class by comparing it to every (ASCII) char.
+template<typename Reference, typename Test>
+void test_class(const string& pattern) {
+  Reference reference_re(pattern);
+  Test test_re(pattern);
+  EXPECT_EQ(reference_re.parsing_failed(), test_re.parsing_failed())
+      << "Pattern: \"" << pattern << "\"";
+  if (reference_re.parsing_failed() || test_re.parsing_failed()) return;
+
+  for (int c = 0; c < 128; c++) {
+    string text(1, c);
+    EXPECT_EQ(reference_re.full_match(text), test_re.full_match(text))
+        << "Pattern: \"" << pattern << "\", Text: \"" << text << "\"" << " (char " << c << ")";
+  }
+}
+
 TEST(UreTest, TestRecursive) {
   UreRecursive ure("a(bb)+a");
   ASSERT_FALSE(ure.parsing_failed());
@@ -111,6 +127,15 @@ TEST(UreTest, TestRecursive) {
   UreRecursive bad("a(b");
   ASSERT_TRUE(bad.parsing_failed());
   ASSERT_EQ(1, bad.parser_error_info().idx);
+
+  ASSERT_TRUE(UreRecursive("abc").partial_match("\nabc\n"));
+  test_class<UreStl, UreRecursive>(".");
+  test_class<UreStl, UreNfa>("\\d");
+  test_class<UreStl, UreNfa>("\\D");
+  test_class<UreStl, UreNfa>("\\s");
+  test_class<UreStl, UreNfa>("\\S");
+  test_class<UreStl, UreNfa>("\\w");
+  test_class<UreStl, UreNfa>("\\W");
 
   test_all_regexes<UreStl, UreRecursive>("abc.+*?()|\\", 4, "abcd", 4);
 }
@@ -127,6 +152,15 @@ TEST(UreTest, TestNfa) {
   UreNfa bad("a(b");
   ASSERT_TRUE(bad.parsing_failed());
   ASSERT_EQ(1, bad.parser_error_info().idx);
+
+  ASSERT_TRUE(UreNfa("abc").partial_match("\nabc\n"));
+  test_class<UreStl, UreNfa>(".");
+  test_class<UreStl, UreNfa>("\\d");
+  test_class<UreStl, UreNfa>("\\D");
+  test_class<UreStl, UreNfa>("\\s");
+  test_class<UreStl, UreNfa>("\\S");
+  test_class<UreStl, UreNfa>("\\w");
+  test_class<UreStl, UreNfa>("\\W");
   
   test_all_regexes<UreStl, UreNfa>("abc.+*?()|\\", 4, "abcd", 4);
 }

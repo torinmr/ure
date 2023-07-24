@@ -1,3 +1,4 @@
+#include <cctype>
 #include <iostream>
 #include <string>
 
@@ -50,13 +51,31 @@ bool Instruction::operator==(const Instruction& other) const {
     case IType::Split: return arg.offset == other.arg.offset;
     case IType::Match: return true;
     default:
-      cout << "Unknown type" << endl;
+      cerr << "Unknown type" << endl;
       return false;
   }
 }
 
-const vector<Instruction> Instruction::dot_star{
-  Split(3), Wildcard(), Jump(-2)
+bool Instruction::match_wildcard(char c) const {
+  assert(type == IType::Wildcard);
+  switch (arg.c) {
+    // Not usable for user-provided regular expressions: only used in match_all defined below.
+    case '*': return true;
+    case '.': return c != '\n' && c != '\r';
+    case 'd': return isdigit(c);
+    case 'D': return !isdigit(c);
+    case 's': return isspace(c);
+    case 'S': return !isspace(c);
+    case 'w': return isalnum(c) || c == '_';
+    case 'W': return !isalnum(c) && c != '_';
+    default:
+      cerr << "Unknown wildcard " << c << endl;
+      return false;
+  }
+}
+
+const vector<Instruction> Instruction::match_all{
+  Split(3), Wildcard('*'), Jump(-2)
 };
 
 }  // namespace ure

@@ -10,7 +10,7 @@ using namespace std;
 UreRecursive::UreRecursive(const string& pattern) {
   re = parser.parse(pattern);
   if (!re.empty()) {
-    partial_re = Instruction::dot_star;
+    partial_re = Instruction::match_all;
     for (const Instruction& inst : re) {
       partial_re.push_back(inst);
     }
@@ -36,7 +36,7 @@ bool match(const vector<Instruction>& program, const string& text,
       }
       return false;
     case IType::Wildcard:
-      if (idx < text.size()) {
+      if (idx < text.size() && inst.match_wildcard(text[idx])) {
         return match(program, text, visited, pc + 1, idx + 1, partial);
       }
       return false;

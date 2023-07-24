@@ -11,7 +11,7 @@ using namespace std;
 UreNfa::UreNfa(const string& pattern) {
   re = parser.parse(pattern);
   if (!re.empty()) {
-    partial_re = Instruction::dot_star;
+    partial_re = Instruction::match_all;
     for (const Instruction& inst : re) {
       partial_re.push_back(inst);
     }
@@ -73,7 +73,7 @@ bool match(const vector<Instruction>& program, const string& text, bool partial 
           }
           break;
         case IType::Wildcard:
-          if (idx < text.size()) {
+          if (idx < text.size() && inst.match_wildcard(text[idx])) {
             next_threads.add(pc+1);
           }
           break;

@@ -21,12 +21,12 @@ TEST(ParserTest, ValidParse) {
     Instruction::Literal('a'),
     Instruction::Jump(3),
     Instruction::Split(2),
-    Instruction::Wildcard(),
+    Instruction::Wildcard('.'),
     Instruction::Match(),
   };
   ASSERT_EQ(expected, re);
 
-  re = parser.parse(R"delim(\(\)\|\?\+\*\.\\)delim");
+  re = parser.parse(R"delim(\(\)\|\?\+\*\.\\\[\]\#)delim");
   expected = {
     Instruction::Literal('('),
     Instruction::Literal(')'),
@@ -36,6 +36,9 @@ TEST(ParserTest, ValidParse) {
     Instruction::Literal('*'),
     Instruction::Literal('.'),
     Instruction::Literal('\\'),
+    Instruction::Literal('['),
+    Instruction::Literal(']'),
+    Instruction::Literal('#'),
     Instruction::Match(),
   };
   ASSERT_EQ(expected, re);
